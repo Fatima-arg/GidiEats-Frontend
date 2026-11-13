@@ -168,8 +168,8 @@ export function AdminRestaurants() {
         deliveryTimeMin: form.deliveryTimeMin !== '' ? Number(form.deliveryTimeMin) : undefined,
         opensAt: form.opensAt || undefined,
         closesAt: form.closesAt || undefined,
-        coverImage: form.coverImage.trim() || undefined,
-        logo: form.logo.trim() || undefined,
+        coverImage: form.coverImage.trim() || null,
+        logo: form.logo.trim() || null,
         rating: form.rating !== '' ? Number(form.rating) : undefined,
         approvalStatus: form.approvalStatus as any,
         isActive: form.isActive

@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useState } from 'react';
 import { Link, useParams } from 'react-router-dom';
 import { ArrowLeft, ArrowRight, Clock, MapPin, Minus, Plus, ShoppingBag, Star, Trash2, Utensils, UtensilsCrossed } from 'lucide-react';
-import { api, unwrap } from '../../api/client';
+import { api, resolveImageUrl, unwrap } from '../../api/client';
 import type { Category, Restaurant } from '../../api/types';
 import { EmptyState, Spinner } from '../../components/ui';
 import { useCart } from '../../store/cart';
@@ -73,7 +73,7 @@ export function RestaurantPage() {
       <div className="relative overflow-hidden rounded-3xl border border-slate-200/80 bg-white shadow-soft">
         <div className="relative h-44 w-full bg-slate-900 sm:h-56 lg:h-64 overflow-hidden">
           {cover ? (
-            <img src={cover} alt={restaurant.name} className="h-full w-full object-cover opacity-90" />
+            <img src={resolveImageUrl(cover)} alt={restaurant.name} className="h-full w-full object-cover opacity-90" />
           ) : (
             <div className="flex h-full w-full items-center justify-center bg-gradient-to-tr from-brand-700 to-amber-600 text-5xl font-black text-white/40">
               {restaurant.name[0]}
@@ -101,7 +101,7 @@ export function RestaurantPage() {
             <div className="flex items-end gap-4">
               <div className="flex h-20 w-20 shrink-0 items-center justify-center rounded-2xl border-4 border-white bg-white shadow-md overflow-hidden sm:h-24 sm:w-24">
                 {restaurant.logo ? (
-                  <img src={restaurant.logo} alt="" className="h-full w-full object-cover" />
+                  <img src={resolveImageUrl(restaurant.logo)} alt="" className="h-full w-full object-cover" />
                 ) : (
                   <div className="flex h-full w-full items-center justify-center bg-brand-600 text-2xl font-black text-white">
                     {restaurant.name[0]}
@@ -200,7 +200,7 @@ export function RestaurantPage() {
                         {/* Dish Image */}
                         {item.image ? (
                           <img
-                            src={item.image}
+                            src={resolveImageUrl(item.image)}
                             alt=""
                             className="h-20 w-20 shrink-0 rounded-2xl object-cover bg-slate-100 shadow-2xs"
                           />

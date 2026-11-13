@@ -1,8 +1,8 @@
 import { useCallback, useEffect, useState } from 'react';
 import { useSearchParams } from 'react-router-dom';
-import { Ban, Check, Eye, Pencil, Plus, Store } from 'lucide-react';
+import { Ban, Check, Eye, Loader2, Pencil, Plus, Store, Upload } from 'lucide-react';
 import clsx from 'clsx';
-import { api, apiMessage, unwrap } from '../../api/client';
+import { api, apiMessage, resolveImageUrl, unwrap } from '../../api/client';
 import type { Restaurant } from '../../api/types';
 import { Badge, Button, EmptyState, Field, Input, Select, Spinner, StatusBadge, TextArea } from '../../components/ui';
 import { naira } from '../../lib/format';
@@ -38,7 +38,34 @@ export function AdminRestaurants() {
   const [view, setView] = useState<Restaurant | null>(null);
   const [editing, setEditing] = useState<Editing>(null);
   const [saving, setSaving] = useState(false);
+  const [uploadingCover, setUploadingCover] = useState(false);
+  const [uploadingLogo, setUploadingLogo] = useState(false);
   const [form, setForm] = useState(EMPTY_FORM);
+
+  const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>, field: 'coverImage' | 'logo') => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    e.target.value = '';
+
+    const setUploading = field === 'coverImage' ? setUploadingCover : setUploadingLogo;
+    try {
+      setUploading(true);
+      setError(null);
+      const formData = new FormData();
+      formData.append('file', file);
+      const res = await api.post('/upload', formData, {
+        headers: { 'Content-Type': 'multipart/form-data' }
+      });
+      const data = unwrap<{ url: string }>(res as never);
+      if (data?.url) {
+        setForm((prev) => ({ ...prev, [field]: data.url }));
+      }
+    } catch (err) {
+      setError(apiMessage(err));
+    } finally {
+      setUploading(false);
+    }
+  };
 
   const load = useCallback(async () => {
     try {
@@ -199,7 +226,7 @@ export function AdminRestaurants() {
               <div className="flex items-center gap-3 min-w-0">
                 <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-brand-100 text-brand-700 overflow-hidden">
                   {r.logo ? (
-                    <img src={r.logo} alt={r.name} className="h-full w-full object-cover" onError={(e) => { (e.target as HTMLElement).style.display = 'none'; }} />
+                    <img src={resolveImageUrl(r.logo)} alt={r.name} className="h-full w-full object-cover" onError={(e) => { (e.target as HTMLElement).style.display = 'none'; }} />
                   ) : (
                     <Store className="h-5 w-5" />
                   )}
@@ -249,14 +276,14 @@ export function AdminRestaurants() {
           <div className="relative w-full max-w-lg overflow-hidden rounded-2xl bg-white shadow-2xl">
             {view.coverImage && (
               <div className="h-32 w-full overflow-hidden bg-slate-100">
-                <img src={view.coverImage} alt={view.name} className="h-full w-full object-cover" />
+                <img src={resolveImageUrl(view.coverImage)} alt={view.name} className="h-full w-full object-cover" />
               </div>
             )}
             <div className="p-5">
               <div className="flex items-center justify-between mb-3">
                 <div className="flex items-center gap-3">
                   {view.logo && (
-                    <img src={view.logo} alt={view.name} className="h-10 w-10 rounded-full object-cover border border-slate-200" />
+                    <img src={resolveImageUrl(view.logo)} alt={view.name} className="h-10 w-10 rounded-full object-cover border border-slate-200" />
                   )}
                   <div>
                     <h2 className="font-bold text-slate-800">{view.name}</h2>
@@ -345,21 +372,92 @@ export function AdminRestaurants() {
                 </Select>
               </Field>
               <div className="sm:col-span-2">
-                <Field label="Cover Image URL" hint="Direct image URL for storefront banner">
-                  <div className="flex gap-2 items-center">
-                    <Input value={form.coverImage} onChange={(e) => setForm({ ...form, coverImage: e.target.value })} placeholder="https://images.unsplash.com/..." />
+                <Field label="Cover Image" hint="Upload an image file or paste a direct URL / relative path (e.g. /uploads/...)">
+                  <div className="space-y-2">
+                    <div className="flex gap-2 items-center">
+                      <Input
+                        value={form.coverImage}
+                        onChange={(e) => setForm({ ...form, coverImage: e.target.value })}
+                        placeholder="https://... or /uploads/..."
+                      />
+                      <label className={clsx('btn-secondary !py-2 !px-3 text-xs shrink-0 cursor-pointer flex items-center gap-1.5 hover:bg-slate-100 transition', uploadingCover && 'opacity-60 pointer-events-none')}>
+                        {uploadingCover ? <Loader2 className="h-4 w-4 animate-spin text-brand-600" /> : <Upload className="h-4 w-4 text-brand-600" />}
+                        <span>{uploadingCover ? 'Uploading…' : 'Upload File'}</span>
+                        <input
+                          type="file"
+                          accept="image/*"
+                          className="hidden"
+                          disabled={uploadingCover}
+                          onChange={(e) => handleFileUpload(e, 'coverImage')}
+                        />
+                      </label>
+                    </div>
                     {form.coverImage && (
-                      <img src={form.coverImage} alt="Cover preview" className="h-10 w-16 object-cover rounded border border-slate-200 shrink-0" onError={(e) => { (e.target as HTMLElement).style.display = 'none'; }} />
+                      <div className="flex items-center gap-3 p-2 bg-slate-50 rounded-lg border border-slate-200">
+                        <img
+                          src={resolveImageUrl(form.coverImage)}
+                          alt="Cover preview"
+                          className="h-12 w-20 object-cover rounded border border-slate-200 shrink-0"
+                          onError={(e) => { (e.target as HTMLElement).style.display = 'none'; }}
+                        />
+                        <div className="text-xs text-slate-500 truncate flex-1 min-w-0">
+                          <p className="font-medium text-slate-700 truncate">{form.coverImage}</p>
+                          <p className="text-[11px] text-slate-400">Storefront Cover Preview</p>
+                        </div>
+                        <button
+                          type="button"
+                          onClick={() => setForm({ ...form, coverImage: '' })}
+                          className="text-xs text-red-500 hover:text-red-700 px-2 py-1 shrink-0 font-medium"
+                        >
+                          Clear
+                        </button>
+                      </div>
                     )}
                   </div>
                 </Field>
               </div>
+
               <div className="sm:col-span-2">
-                <Field label="Logo URL" hint="Direct image URL for restaurant avatar / logo">
-                  <div className="flex gap-2 items-center">
-                    <Input value={form.logo} onChange={(e) => setForm({ ...form, logo: e.target.value })} placeholder="https://..." />
+                <Field label="Logo / Avatar" hint="Upload a logo file or paste a direct URL / relative path">
+                  <div className="space-y-2">
+                    <div className="flex gap-2 items-center">
+                      <Input
+                        value={form.logo}
+                        onChange={(e) => setForm({ ...form, logo: e.target.value })}
+                        placeholder="https://... or /uploads/..."
+                      />
+                      <label className={clsx('btn-secondary !py-2 !px-3 text-xs shrink-0 cursor-pointer flex items-center gap-1.5 hover:bg-slate-100 transition', uploadingLogo && 'opacity-60 pointer-events-none')}>
+                        {uploadingLogo ? <Loader2 className="h-4 w-4 animate-spin text-brand-600" /> : <Upload className="h-4 w-4 text-brand-600" />}
+                        <span>{uploadingLogo ? 'Uploading…' : 'Upload File'}</span>
+                        <input
+                          type="file"
+                          accept="image/*"
+                          className="hidden"
+                          disabled={uploadingLogo}
+                          onChange={(e) => handleFileUpload(e, 'logo')}
+                        />
+                      </label>
+                    </div>
                     {form.logo && (
-                      <img src={form.logo} alt="Logo preview" className="h-10 w-10 object-cover rounded-full border border-slate-200 shrink-0" onError={(e) => { (e.target as HTMLElement).style.display = 'none'; }} />
+                      <div className="flex items-center gap-3 p-2 bg-slate-50 rounded-lg border border-slate-200">
+                        <img
+                          src={resolveImageUrl(form.logo)}
+                          alt="Logo preview"
+                          className="h-10 w-10 object-cover rounded-full border border-slate-200 shrink-0"
+                          onError={(e) => { (e.target as HTMLElement).style.display = 'none'; }}
+                        />
+                        <div className="text-xs text-slate-500 truncate flex-1 min-w-0">
+                          <p className="font-medium text-slate-700 truncate">{form.logo}</p>
+                          <p className="text-[11px] text-slate-400">Storefront Logo Preview</p>
+                        </div>
+                        <button
+                          type="button"
+                          onClick={() => setForm({ ...form, logo: '' })}
+                          className="text-xs text-red-500 hover:text-red-700 px-2 py-1 shrink-0 font-medium"
+                        >
+                          Clear
+                        </button>
+                      </div>
                     )}
                   </div>
                 </Field>

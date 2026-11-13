@@ -2,7 +2,7 @@ import { useEffect, useMemo, useRef, useState } from 'react';
 import { Link, useSearchParams } from 'react-router-dom';
 import { Clock, Flame, MapPin, Search, Sparkles, Star, Utensils, X } from 'lucide-react';
 import clsx from 'clsx';
-import { api, unwrap } from '../../api/client';
+import { api, resolveImageUrl, unwrap } from '../../api/client';
 import type { Restaurant } from '../../api/types';
 import { EmptyState, Spinner } from '../../components/ui';
 import { naira } from '../../lib/format';
@@ -206,7 +206,7 @@ export function BrowsePage() {
               <div className="relative aspect-[16/10] w-full overflow-hidden bg-slate-100">
                 {r.logo || r.coverImage ? (
                   <img
-                    src={r.coverImage || r.logo || undefined}
+                    src={resolveImageUrl(r.coverImage || r.logo)}
                     alt={r.name}
                     className="h-full w-full object-cover transition-transform duration-300 group-hover:scale-105"
                   />

@@ -4,7 +4,7 @@ import { Ban, Check, Eye, Pencil, Plus, Store } from 'lucide-react';
 import clsx from 'clsx';
 import { api, apiMessage, unwrap } from '../../api/client';
 import type { Restaurant } from '../../api/types';
-import { Badge, Button, EmptyState, Field, Input, Spinner, StatusBadge, TextArea } from '../../components/ui';
+import { Badge, Button, EmptyState, Field, Input, Select, Spinner, StatusBadge, TextArea } from '../../components/ui';
 import { naira } from '../../lib/format';
 
 type Editing = 'new' | Restaurant | null;
@@ -21,7 +21,12 @@ const EMPTY_FORM = {
   deliveryTimeMin: '',
   opensAt: '09:00',
   closesAt: '21:00',
-  description: ''
+  description: '',
+  coverImage: '',
+  logo: '',
+  rating: '4.2',
+  approvalStatus: 'APPROVED',
+  isActive: true
 };
 
 export function AdminRestaurants() {
@@ -104,7 +109,12 @@ export function AdminRestaurants() {
       deliveryTimeMin: r.deliveryTimeMin != null ? String(r.deliveryTimeMin) : '',
       opensAt: r.opensAt ?? '09:00',
       closesAt: r.closesAt ?? '21:00',
-      description: r.description ?? ''
+      description: r.description ?? '',
+      coverImage: r.coverImage ?? '',
+      logo: r.logo ?? '',
+      rating: r.rating != null ? String(r.rating) : '4.2',
+      approvalStatus: r.approvalStatus ?? 'APPROVED',
+      isActive: r.isActive ?? true
     });
     setEditing(r);
     setError(null);
@@ -130,7 +140,12 @@ export function AdminRestaurants() {
         deliveryFee: form.deliveryFee !== '' ? Number(form.deliveryFee) : undefined,
         deliveryTimeMin: form.deliveryTimeMin !== '' ? Number(form.deliveryTimeMin) : undefined,
         opensAt: form.opensAt || undefined,
-        closesAt: form.closesAt || undefined
+        closesAt: form.closesAt || undefined,
+        coverImage: form.coverImage.trim() || undefined,
+        logo: form.logo.trim() || undefined,
+        rating: form.rating !== '' ? Number(form.rating) : undefined,
+        approvalStatus: form.approvalStatus as any,
+        isActive: form.isActive
       };
       if (editing === 'new') {
         await api.post('/restaurants', payload);
@@ -182,8 +197,12 @@ export function AdminRestaurants() {
           <div key={r.id} className="card p-4">
             <div className="flex flex-wrap items-center justify-between gap-3">
               <div className="flex items-center gap-3 min-w-0">
-                <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-brand-100 text-brand-700">
-                  <Store className="h-5 w-5" />
+                <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-brand-100 text-brand-700 overflow-hidden">
+                  {r.logo ? (
+                    <img src={r.logo} alt={r.name} className="h-full w-full object-cover" onError={(e) => { (e.target as HTMLElement).style.display = 'none'; }} />
+                  ) : (
+                    <Store className="h-5 w-5" />
+                  )}
                 </div>
                 <div className="min-w-0">
                   <p className="font-bold text-slate-800 truncate">{r.name}</p>
@@ -227,27 +246,44 @@ export function AdminRestaurants() {
       {view && (
         <div className="fixed inset-0 z-40 flex items-center justify-center p-4">
           <div className="absolute inset-0 bg-slate-900/40" onClick={() => setView(null)} />
-          <div className="relative w-full max-w-lg rounded-2xl bg-white p-5 shadow-2xl">
-            <div className="flex items-center justify-between mb-3">
-              <h2 className="font-bold text-slate-800">{view.name}</h2>
-              <button className="p-1 text-slate-400" onClick={() => setView(null)}>✕</button>
-            </div>
-            <dl className="space-y-2 text-sm">
-              {[
-                ['Phone', view.phone],
-                ['Email', view.email],
-                ['Address', `${view.addressStreet}, ${view.addressCity}, ${view.addressState}`],
-                ['Delivery', `${naira(view.deliveryFee)} · ${view.deliveryTimeMin} min`],
-                ['Hours', `${view.opensAt} – ${view.closesAt}`],
-                ['Rating', typeof view.rating === 'number' ? `${view.rating.toFixed(1)} (${view.ratingCount ?? 0})` : '—']
-              ].map(([k, v]) => (
-                <div key={String(k)} className="flex justify-between gap-4">
-                  <dt className="text-slate-400">{k}</dt>
-                  <dd className="font-medium text-slate-700 text-right">{String(v ?? '—')}</dd>
+          <div className="relative w-full max-w-lg overflow-hidden rounded-2xl bg-white shadow-2xl">
+            {view.coverImage && (
+              <div className="h-32 w-full overflow-hidden bg-slate-100">
+                <img src={view.coverImage} alt={view.name} className="h-full w-full object-cover" />
+              </div>
+            )}
+            <div className="p-5">
+              <div className="flex items-center justify-between mb-3">
+                <div className="flex items-center gap-3">
+                  {view.logo && (
+                    <img src={view.logo} alt={view.name} className="h-10 w-10 rounded-full object-cover border border-slate-200" />
+                  )}
+                  <div>
+                    <h2 className="font-bold text-slate-800">{view.name}</h2>
+                    <p className="text-xs text-slate-400">{view.cuisineType ?? 'Restaurant'}</p>
+                  </div>
                 </div>
-              ))}
-              {view.description && <p className="pt-2 text-slate-500">{view.description}</p>}
-            </dl>
+                <button className="p-1 text-slate-400" onClick={() => setView(null)}>✕</button>
+              </div>
+              <dl className="space-y-2 text-sm">
+                {[
+                  ['Phone', view.phone],
+                  ['Email', view.email],
+                  ['Address', `${view.addressStreet}, ${view.addressCity}, ${view.addressState}`],
+                  ['Delivery', `${naira(view.deliveryFee)} · ${view.deliveryTimeMin} min`],
+                  ['Hours', `${view.opensAt} – ${view.closesAt}`],
+                  ['Rating', typeof view.rating === 'number' ? `★ ${view.rating.toFixed(1)} (${view.ratingCount ?? 0} reviews)` : '—'],
+                  ['Status', view.approvalStatus],
+                  ['Active', view.isActive ? 'Active' : 'Disabled']
+                ].map(([k, v]) => (
+                  <div key={String(k)} className="flex justify-between gap-4">
+                    <dt className="text-slate-400">{k}</dt>
+                    <dd className="font-medium text-slate-700 text-right">{String(v ?? '—')}</dd>
+                  </div>
+                ))}
+                {view.description && <p className="pt-2 text-slate-500 border-t border-slate-100 text-xs">{view.description}</p>}
+              </dl>
+            </div>
           </div>
         </div>
       )}
@@ -298,6 +334,48 @@ export function AdminRestaurants() {
               <Field label="Closes (HH:MM)">
                 <Input value={form.closesAt} onChange={(e) => setForm({ ...form, closesAt: e.target.value })} placeholder="21:00" />
               </Field>
+              <Field label="Rating (0.0 - 5.0)">
+                <Input type="number" min="0" max="5" step="0.1" value={form.rating} onChange={(e) => setForm({ ...form, rating: e.target.value })} placeholder="4.2" />
+              </Field>
+              <Field label="Approval Status">
+                <Select value={form.approvalStatus} onChange={(e) => setForm({ ...form, approvalStatus: e.target.value })}>
+                  <option value="APPROVED">APPROVED</option>
+                  <option value="PENDING">PENDING</option>
+                  <option value="REJECTED">REJECTED</option>
+                </Select>
+              </Field>
+              <div className="sm:col-span-2">
+                <Field label="Cover Image URL" hint="Direct image URL for storefront banner">
+                  <div className="flex gap-2 items-center">
+                    <Input value={form.coverImage} onChange={(e) => setForm({ ...form, coverImage: e.target.value })} placeholder="https://images.unsplash.com/..." />
+                    {form.coverImage && (
+                      <img src={form.coverImage} alt="Cover preview" className="h-10 w-16 object-cover rounded border border-slate-200 shrink-0" onError={(e) => { (e.target as HTMLElement).style.display = 'none'; }} />
+                    )}
+                  </div>
+                </Field>
+              </div>
+              <div className="sm:col-span-2">
+                <Field label="Logo URL" hint="Direct image URL for restaurant avatar / logo">
+                  <div className="flex gap-2 items-center">
+                    <Input value={form.logo} onChange={(e) => setForm({ ...form, logo: e.target.value })} placeholder="https://..." />
+                    {form.logo && (
+                      <img src={form.logo} alt="Logo preview" className="h-10 w-10 object-cover rounded-full border border-slate-200 shrink-0" onError={(e) => { (e.target as HTMLElement).style.display = 'none'; }} />
+                    )}
+                  </div>
+                </Field>
+              </div>
+              <div className="sm:col-span-2 flex items-center gap-2">
+                <input
+                  id="restaurant-is-active"
+                  type="checkbox"
+                  checked={form.isActive}
+                  onChange={(e) => setForm({ ...form, isActive: e.target.checked })}
+                  className="h-4 w-4 rounded border-slate-300 text-brand-600 focus:ring-brand-500"
+                />
+                <label htmlFor="restaurant-is-active" className="text-sm font-medium text-slate-700">
+                  Restaurant is Active (visible to customers in Kano)
+                </label>
+              </div>
               <div className="sm:col-span-2">
                 <Field label="Description" hint="Optional">
                   <TextArea value={form.description} onChange={(e) => setForm({ ...form, description: e.target.value })} placeholder="Short description shown on the storefront" />

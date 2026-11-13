@@ -3,8 +3,29 @@ import { useAuth } from '../store/auth';
 import { clearAuth } from '../store/storage';
 import type { ApiErrorBody } from './types';
 
+const envApiUrl = (import.meta.env.VITE_API_URL || import.meta.env.VITE_BACKEND_URL || '').trim();
+
+// Format base URL:
+// In production or when hosted, if VITE_API_URL is provided, route directly to that backend.
+// In local development when VITE_API_URL is unset, default to '/api' to use Vite's dev proxy.
+export const API_BASE_URL = envApiUrl
+  ? (envApiUrl.endsWith('/api') ? envApiUrl : `${envApiUrl.replace(/\/+$/, '')}/api`)
+  : '/api';
+
+export const BACKEND_ROOT_URL = envApiUrl
+  ? envApiUrl.replace(/\/api\/?$/, '').replace(/\/+$/, '')
+  : '';
+
+export function resolveImageUrl(src?: string | null): string {
+  if (!src) return '';
+  if (src.startsWith('http://') || src.startsWith('https://') || src.startsWith('data:')) {
+    return src;
+  }
+  return `${BACKEND_ROOT_URL}${src.startsWith('/') ? '' : '/'}${src}`;
+}
+
 export const api = axios.create({
-  baseURL: '/api',
+  baseURL: API_BASE_URL,
   headers: { 'Content-Type': 'application/json' }
 });
 

@@ -16,8 +16,21 @@ export interface User {
     position?: string;
     restaurant?: { id: number; name: string; logo?: string | null };
   } | null;
-  rider?: { id?: number; vehicleType?: string; availabilityStatus?: string } | null;
-  customer?: { id?: number } | null;
+  rider?: {
+    id?: number;
+    vehicleType?: string;
+    availabilityStatus?: string;
+    restaurantId?: number | null;
+    licensePlate?: string | null;
+    totalDeliveries?: number;
+    rating?: number;
+    isActive?: boolean;
+    restaurant?: { id: number; name: string; logo?: string | null } | null;
+  } | null;
+  customer?: {
+    id?: number;
+    addresses?: Array<{ id?: number; street: string; city: string; state: string }>;
+  } | null;
   [key: string]: unknown;
 }
 

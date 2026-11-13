@@ -80,7 +80,7 @@ export function StaffMenu() {
       if (rid) {
         // Load menu items for this restaurant
         const res = await api.get('/food-items/admin/items', {
-          params: { restaurantId: rid, limit: 200 }
+          params: { restaurantId: rid, limit: 100 }
         });
         const list = unwrap<FoodItem[]>(res as never);
         setItems(Array.isArray(list) ? list : []);

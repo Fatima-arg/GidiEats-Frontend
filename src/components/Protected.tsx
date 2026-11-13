@@ -26,9 +26,10 @@ export function roleHome(role?: Role): string {
   }
 }
 
-export function RequireRole({ role, children }: { role: Role; children: React.ReactElement }) {
+export function RequireRole({ role, roles, children }: { role?: Role; roles?: Role[]; children: React.ReactElement }) {
   const { user } = useAuth();
-  if (!user || user.role !== role) {
+  const allowed = roles ?? (role ? [role] : []);
+  if (!user || !allowed.includes(user.role)) {
     return <Navigate to={roleHome(user?.role)} replace />;
   }
   return children;

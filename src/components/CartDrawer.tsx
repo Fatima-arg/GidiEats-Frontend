@@ -1,5 +1,6 @@
 import { Link } from 'react-router-dom';
 import { ArrowRight, Minus, Plus, ShoppingBag, Trash2, Utensils, X } from 'lucide-react';
+import { resolveImageUrl } from '../api/client';
 import { useCart } from '../store/cart';
 import { naira } from '../lib/format';
 
@@ -77,9 +78,10 @@ export function CartDrawer({ open, onClose }: { open: boolean; onClose: () => vo
               >
                 {l.item.image ? (
                   <img
-                    src={l.item.image}
+                    src={resolveImageUrl(l.item.image)}
                     alt=""
                     className="h-16 w-16 shrink-0 rounded-xl object-cover bg-slate-100"
+                    onError={(e) => { (e.target as HTMLElement).style.display = 'none'; }}
                   />
                 ) : (
                   <div className="flex h-16 w-16 shrink-0 items-center justify-center rounded-xl bg-brand-50 text-brand-600">

@@ -105,7 +105,7 @@ export default function App() {
         path="/staff"
         element={
           <RequireAuth>
-            <RequireRole role="RESTAFF">
+            <RequireRole roles={['RESTAFF', 'ADMIN']}>
               <StaffLayout>
                 <Outlet />
               </StaffLayout>

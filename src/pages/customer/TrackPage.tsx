@@ -5,7 +5,7 @@ import { Button, Field, Input, Spinner, StatusBadge } from '../../components/ui'
 import { Order } from '../../api/types';
 import { formatDate, naira } from '../../lib/format';
 import { parseDeliveryAddress } from '../../lib/order';
-import { api, apiMessage, unwrap } from '../../api/client';
+import { api, apiMessage, resolveImageUrl, unwrap } from '../../api/client';
 import { PaymentTrackerCard } from '../../components/payment/PaymentTrackerCard';
 import { FlutterwaveModal } from '../../components/payment/FlutterwaveModal';
 
@@ -319,7 +319,12 @@ export function TrackPage() {
                 {(result.items ?? []).map((it) => (
                   <div key={it.id} className="flex items-center gap-3 text-xs">
                     {it.image ? (
-                      <img src={it.image} alt="" className="h-12 w-12 rounded-xl object-cover bg-slate-100" />
+                      <img
+                        src={resolveImageUrl(it.image)}
+                        alt=""
+                        className="h-12 w-12 rounded-xl object-cover bg-slate-100"
+                        onError={(e) => { (e.target as HTMLElement).style.display = 'none'; }}
+                      />
                     ) : (
                       <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-brand-50 text-brand-600 font-bold">
                         🍽️

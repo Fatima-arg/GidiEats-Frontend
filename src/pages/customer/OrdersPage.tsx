@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { ArrowRight, ChevronRight, Clock } from 'lucide-react';
-import { api, unwrap } from '../../api/client';
+import { api, resolveImageUrl, unwrap } from '../../api/client';
 import type { Order } from '../../api/types';
 import { EmptyState, Spinner, StatusBadge } from '../../components/ui';
 import { formatDate, naira } from '../../lib/format';
@@ -111,7 +111,12 @@ export function OrdersPage() {
                 <div className="flex items-center gap-3">
                   <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-brand-50 text-brand-700 font-black">
                     {o.restaurant?.logo ? (
-                      <img src={o.restaurant.logo} alt="" className="h-full w-full rounded-xl object-cover" />
+                      <img
+                        src={resolveImageUrl(o.restaurant.logo)}
+                        alt=""
+                        className="h-full w-full rounded-xl object-cover"
+                        onError={(e) => { (e.target as HTMLElement).style.display = 'none'; }}
+                      />
                     ) : (
                       o.restaurant?.name?.[0] ?? 'G'
                     )}

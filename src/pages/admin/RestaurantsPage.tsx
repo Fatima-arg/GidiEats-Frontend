@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useState } from 'react';
 import { useSearchParams } from 'react-router-dom';
-import { Ban, Check, Eye, Loader2, Pencil, Plus, Store, Upload } from 'lucide-react';
+import { Ban, Check, Eye, Loader2, Pencil, Plus, Store, Upload, UtensilsCrossed } from 'lucide-react';
 import clsx from 'clsx';
 import { api, apiMessage, resolveImageUrl, unwrap } from '../../api/client';
 import type { Restaurant } from '../../api/types';
@@ -243,9 +243,17 @@ export function AdminRestaurants() {
                 <Button className="btn-secondary !py-1.5 text-xs" onClick={() => setView(r)}>
                   <Eye className="h-4 w-4" />
                 </Button>
-                <Button className="btn-secondary !py-1.5 text-xs" onClick={() => openEdit(r)}>
+                <Button className="btn-secondary !py-1.5 text-xs" onClick={() => openEdit(r)} title="Edit restaurant">
                   <Pencil className="h-4 w-4" />
                 </Button>
+                <a
+                  href={`/staff/menu?restaurantId=${r.id}`}
+                  className="btn-secondary !py-1.5 text-xs inline-flex items-center gap-1 font-semibold text-brand-700 hover:text-brand-800 hover:bg-brand-50"
+                  title="Manage Menu Items"
+                >
+                  <UtensilsCrossed className="h-3.5 w-3.5" />
+                  <span>Menu</span>
+                </a>
                 {r.approvalStatus === 'PENDING' && (
                   <>
                     <Button className="btn-primary !py-1.5 text-xs" loading={busy === r.id} onClick={() => setStatus(r, 'APPROVED')}>
@@ -310,6 +318,14 @@ export function AdminRestaurants() {
                 ))}
                 {view.description && <p className="pt-2 text-slate-500 border-t border-slate-100 text-xs">{view.description}</p>}
               </dl>
+              <div className="pt-3 mt-3 border-t border-slate-100 flex justify-end">
+                <a
+                  href={`/staff/menu?restaurantId=${view.id}`}
+                  className="btn-primary !py-2 text-xs inline-flex items-center gap-1.5 font-bold"
+                >
+                  <UtensilsCrossed className="h-4 w-4" /> Manage Restaurant Menu
+                </a>
+              </div>
             </div>
           </div>
         </div>

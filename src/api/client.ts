@@ -3,7 +3,8 @@ import { useAuth } from '../store/auth';
 import { clearAuth } from '../store/storage';
 import type { ApiErrorBody } from './types';
 
-const envApiUrl = (import.meta.env.VITE_API_URL || import.meta.env.VITE_BACKEND_URL || '').trim();
+const metaEnv = (typeof import.meta !== 'undefined' && (import.meta as any).env) || {};
+const envApiUrl = String(metaEnv.VITE_API_URL || metaEnv.VITE_BACKEND_URL || '').trim();
 
 // Format base URL:
 // In production or when hosted, if VITE_API_URL is provided, route directly to that backend.
